@@ -61,11 +61,12 @@ The project aims to simplify restaurant operations by improving communication be
 # ✨ Key Features 
 
 - 🍽️ Browse restaurant menu
-- 🛒 Add items to cart
+- 🍽️ Search and filter menu by category
+- 🛒 Add items to cart and order online
 - 📦 Real-time order tracking using SignalR (planning)
 - 🔔 Live order notifications for admin and kitchen staff(planning)
 - 💳 QR code payment integration (planning)
-- 🧑‍🍳 Admin dashboard for managing orders
+-  Admin dashboard for managing orders and tracking 
 - 📱 Responsive user interface
 - 🔐 Authentication and role-based access
 
