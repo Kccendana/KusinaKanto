@@ -19,7 +19,7 @@
 
 **KusinaKanto Ordering App** is a web-based food ordering system designed for small restaurants and food businesses. Customers can browse menu items, place orders, and track order status in real time. Restaurant staff can manage incoming orders through a live admin dashboard.
 
-The project aims to simplify restaurant operations by improving communication between customers, kitchen staff, and cashiers using real-time updates and QR-based payment integration.
+The project aims to simplify restaurant operations by improving communication between customers, kitchen staff, and cashiers using real-time updates.
 
 ---
 
@@ -67,7 +67,7 @@ The project aims to simplify restaurant operations by improving communication be
 - 💳 QR code payment integration (planning)
 - 🧑‍🍳 Admin dashboard for managing orders
 - 📱 Responsive user interface
-- 🔐 Authentication and role-based access (planning)
+- 🔐 Authentication and role-based access
 
 
 
