@@ -95,8 +95,7 @@ To run this project, make sure you have the following installed:
 
 - Visual Studio Code or Visual Studio
 - .NET SDK 8.0+
-- Node.js and npm
-- PostgreSQL or SQL Server
+- SQL Server
 
 ---
 
