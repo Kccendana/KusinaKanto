@@ -24,7 +24,7 @@ The project aims to simplify restaurant operations by improving communication be
 ---
 
 ## Group members
-- Christopher Edeson Effiong
+- Christopher Edeson
 - Katherine Cendana
 
 # 🛠 Built With 
@@ -95,8 +95,8 @@ The project aims to simplify restaurant operations by improving communication be
 To run this project, make sure you have the following installed:
 
 - Visual Studio Code or Visual Studio
-- .NET SDK 8.0+
-- SQL Server
+- .NET SDK 10.0
+- SQL Server (for the backend data layer — not required to run the UI yet)
 
 ---
 
@@ -107,3 +107,13 @@ Clone the repository:
 ```bash
 git clone https://github.com/Kccendana/KusinaKanto.git
 cd KusinaKanto
+```
+
+Run the app locally:
+
+```bash
+dotnet run
+```
+
+Then open the `http://localhost:<port>` URL shown in the terminal. The menu loads
+from seeded sample data, so no database setup is needed to view and use the UI.
