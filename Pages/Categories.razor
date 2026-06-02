@@ -1,0 +1,35 @@
+@page "/categories"
+
+@using KusinaKanto.Models
+@using KusinaKanto.Data
+@inject AppDbContext Db
+
+<h3>Menu Categories</h3>
+
+@if (categories == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <ul>
+        @foreach (var category in categories)
+        {
+            <li>
+                <strong>@category.Name</strong>
+                <br />
+            </li>
+        }
+    </ul>
+}
+
+@code {
+    private List<MenuCategory>? categories;
+
+    protected override void OnInitialized()
+    {
+        categories = Db.MenuCategories
+                       .OrderBy(c => c.Name)
+                       .ToList();
+    }
+}
