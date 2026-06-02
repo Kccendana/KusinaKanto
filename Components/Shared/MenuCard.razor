@@ -1,0 +1,75 @@
+@implements IDisposable
+@inject CartState Cart
+
+<div class="group bg-white rounded-2xl overflow-hidden border border-stone-100 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 flex flex-col">
+    <div class="relative overflow-hidden h-44">
+        <img src="@Item.ImageUrl" alt="@Item.Name"
+             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+             onerror="this.onerror=null;this.src='https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg'" />
+        <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+        <div class="absolute top-2 left-2 flex gap-1.5">
+            @if (Item.IsBestseller)
+            {
+                <span class="flex items-center gap-1 bg-amber-500 text-white text-xs font-semibold px-2 py-1 rounded-full shadow-sm">
+                    <Icon Name="star" Class="w-3 h-3" Fill="true" />
+                    Best Seller
+                </span>
+            }
+            @if (Item.IsSpicy)
+            {
+                <span class="flex items-center gap-1 bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded-full shadow-sm">
+                    <Icon Name="flame" Class="w-3 h-3" Fill="true" />
+                    Spicy
+                </span>
+            }
+        </div>
+        @if (Qty > 0)
+        {
+            <div class="absolute top-2 right-2 w-6 h-6 bg-amber-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-md">
+                @Qty
+            </div>
+        }
+    </div>
+
+    <div class="p-4 flex flex-col flex-1">
+        <h3 class="font-semibold text-stone-900 text-base leading-tight mb-1">@Item.Name</h3>
+        <p class="text-stone-500 text-sm leading-relaxed flex-1 line-clamp-2">@Item.Description</p>
+
+        <div class="flex items-center justify-between mt-3 pt-3 border-t border-stone-100">
+            <span class="text-lg font-bold text-stone-900">$@Item.Price.ToString("0.00")</span>
+
+            @if (Qty == 0)
+            {
+                <button @onclick="() => Cart.Add(Item)"
+                        class="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-xl text-sm font-medium transition-all duration-200 active:scale-95 shadow-sm hover:shadow-md">
+                    <Icon Name="plus" Class="w-4 h-4" />
+                    Add
+                </button>
+            }
+            else
+            {
+                <div class="flex items-center gap-2">
+                    <button @onclick="() => Cart.Remove(Item.Id)"
+                            class="w-8 h-8 flex items-center justify-center bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-xl transition-all duration-200 active:scale-95">
+                        <Icon Name="minus" Class="w-4 h-4" />
+                    </button>
+                    <span class="w-5 text-center font-bold text-stone-900">@Qty</span>
+                    <button @onclick="() => Cart.Add(Item)"
+                            class="w-8 h-8 flex items-center justify-center bg-amber-500 hover:bg-amber-600 text-white rounded-xl transition-all duration-200 active:scale-95">
+                        <Icon Name="plus" Class="w-4 h-4" />
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public MenuItem Item { get; set; } = default!;
+
+    private int Qty => Cart.QuantityOf(Item.Id);
+
+    protected override void OnInitialized() => Cart.OnChange += StateHasChanged;
+
+    public void Dispose() => Cart.OnChange -= StateHasChanged;
+}

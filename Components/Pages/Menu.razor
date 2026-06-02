@@ -1,0 +1,184 @@
+@page "/"
+@inject IMenuService MenuService
+@inject IOrderService OrderService
+@inject CartState Cart
+@inject NavigationManager Nav
+
+<div class="min-h-screen bg-stone-50">
+    <Header OnCartClick="() => _cartOpen = true" />
+
+    <CategoryFilter Categories="_categories" Active="_activeCategory" OnChange="OnCategoryChange" />
+
+    <!-- Hero -->
+    <div class="relative overflow-hidden bg-gradient-to-br from-stone-900 via-stone-800 to-amber-900">
+        <div class="absolute inset-0 opacity-20"
+             style="background-image: url('https://images.pexels.com/photos/958545/pexels-photo-958545.jpeg'); background-size: cover; background-position: center;"></div>
+        <div class="relative max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+            <p class="text-amber-400 text-sm font-semibold uppercase tracking-widest mb-2">Authentic Filipino Cuisine</p>
+            <h1 class="text-3xl sm:text-4xl font-bold text-white mb-3 leading-tight">
+                Taste the Heart of<br />the Philippines
+            </h1>
+            <p class="text-stone-300 max-w-md text-sm sm:text-base leading-relaxed">
+                From classic adobo to crispy lechon, every dish is made with love and the finest ingredients, just like home.
+            </p>
+        </div>
+    </div>
+
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+        <!-- Search -->
+        <div class="relative mb-6">
+            <Icon Name="search" Class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+            <input type="text" @bind="_search" @bind:event="oninput" placeholder="Search dishes..."
+                   class="w-full pl-11 pr-4 py-3 bg-white border border-stone-200 rounded-2xl text-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition-all shadow-sm" />
+        </div>
+
+        @if (_loading)
+        {
+            <div class="flex items-center justify-center py-20">
+                <Icon Name="loader-circle" Class="w-8 h-8 animate-spin text-amber-500" />
+            </div>
+        }
+        else if (_error is not null)
+        {
+            <div class="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl">
+                <Icon Name="circle-alert" Class="w-5 h-5 flex-shrink-0" />
+                <p class="text-sm">@_error</p>
+            </div>
+        }
+        else if (Filtered.Count == 0)
+        {
+            <div class="text-center py-16">
+                <p class="text-stone-400 text-lg">No dishes found</p>
+                <p class="text-stone-300 text-sm mt-1">Try a different category or search term</p>
+            </div>
+        }
+        else
+        {
+            @foreach (var group in Grouped)
+            {
+                <div class="mb-10">
+                    @if (group.Category is not null)
+                    {
+                        <div class="mb-4">
+                            <h3 class="text-xl font-bold text-stone-900">@group.Category.Name</h3>
+                            @if (!string.IsNullOrEmpty(group.Category.Description))
+                            {
+                                <p class="text-stone-500 text-sm mt-0.5">@group.Category.Description</p>
+                            }
+                        </div>
+                    }
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        @foreach (var item in group.Items)
+                        {
+                            <MenuCard Item="item" @key="item.Id" />
+                        }
+                    </div>
+                </div>
+            }
+        }
+    </div>
+
+    @if (_cartOpen)
+    {
+        <CartDrawer OnClose="() => _cartOpen = false"
+                    OnCheckout="@(() => { _cartOpen = false; _checkoutOpen = true; })" />
+    }
+
+    @if (_checkoutOpen)
+    {
+        <CheckoutModal OnClose="() => _checkoutOpen = false" OnSubmit="HandleCheckout" />
+    }
+</div>
+
+@code {
+    private IReadOnlyList<MenuCategory> _categories = new List<MenuCategory>();
+    private IReadOnlyList<MenuItem> _items = new List<MenuItem>();
+    private bool _loading = true;
+    private string? _error;
+    private string _activeCategory = "all";
+    private string _search = "";
+    private bool _cartOpen;
+    private bool _checkoutOpen;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _categories = await MenuService.GetCategoriesAsync();
+            _items = await MenuService.GetAvailableItemsAsync();
+        }
+        catch
+        {
+            _error = "Failed to load menu. Please refresh the page.";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void OnCategoryChange(string id) => _activeCategory = id;
+
+    private record MenuGroup(MenuCategory? Category, List<MenuItem> Items);
+
+    private List<MenuItem> Filtered
+    {
+        get
+        {
+            IEnumerable<MenuItem> result = _items;
+            if (_activeCategory != "all")
+                result = result.Where(i => i.CategoryId == _activeCategory);
+            if (!string.IsNullOrWhiteSpace(_search))
+            {
+                var q = _search.Trim().ToLowerInvariant();
+                result = result.Where(i =>
+                    i.Name.ToLowerInvariant().Contains(q) ||
+                    i.Description.ToLowerInvariant().Contains(q));
+            }
+            return result.ToList();
+        }
+    }
+
+    private List<MenuGroup> Grouped
+    {
+        get
+        {
+            if (_activeCategory != "all" || !string.IsNullOrWhiteSpace(_search))
+                return new() { new MenuGroup(null, Filtered) };
+
+            return _categories
+                .Select(cat => new MenuGroup(cat, _items.Where(i => i.CategoryId == cat.Id).ToList()))
+                .Where(g => g.Items.Count > 0)
+                .ToList();
+        }
+    }
+
+    private async Task HandleCheckout(CheckoutDetails details)
+    {
+        var order = new Order
+        {
+            CustomerName = details.Name,
+            CustomerEmail = details.Email,
+            TableNumber = details.Table,
+            Notes = details.Notes,
+            TotalAmount = Cart.Total,
+            Items = Cart.Lines.Select(l => new OrderItem
+            {
+                MenuItemId = l.Item.Id,
+                Name = l.Item.Name,
+                Quantity = l.Quantity,
+                UnitPrice = l.Item.Price,
+                Subtotal = l.Subtotal
+            }).ToList()
+        };
+
+        var placed = await OrderService.PlaceOrderAsync(order);
+
+        Cart.LastOrder = placed;
+        Cart.LastItems = Cart.Lines.Select(l => new CartLine { Item = l.Item, Quantity = l.Quantity }).ToList();
+        Cart.Clear();
+
+        _checkoutOpen = false;
+        Nav.NavigateTo("/confirmation");
+    }
+}

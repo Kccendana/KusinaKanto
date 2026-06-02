@@ -1,29 +1,33 @@
+using KusinaKanto.Components;
+using KusinaKanto.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-builder.Services.AddControllersWithViews();
+// Blazor Server (interactive Razor components).
+builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents();
+
+// Data seam — swap these in-memory implementations for the EF Core + SQL Server
+// backend when it's ready; the UI depends only on the interfaces.
+builder.Services.AddSingleton<IMenuService, InMemoryMenuService>();
+builder.Services.AddScoped<IOrderService, InMemoryOrderService>();
+
+// Per-session cart.
+builder.Services.AddScoped<CartState>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    app.UseExceptionHandler("/Error", createScopeForErrors: true);
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
-app.UseRouting();
-
-app.UseAuthorization();
+app.UseAntiforgery();
 
 app.MapStaticAssets();
-
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}")
-    .WithStaticAssets();
-
+app.MapRazorComponents<App>()
+    .AddInteractiveServerRenderMode();
 
 app.Run();

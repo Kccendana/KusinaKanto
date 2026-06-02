@@ -1,0 +1,92 @@
+@implements IDisposable
+@inject CartState Cart
+
+<div class="fixed inset-0 bg-black/50 z-50 backdrop-blur-sm" @onclick="OnClose"></div>
+<div class="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white z-50 shadow-2xl flex flex-col animate-slide-in">
+    <div class="flex items-center justify-between px-5 py-4 border-b border-stone-100">
+        <div>
+            <h2 class="text-lg font-bold text-stone-900">Your Order</h2>
+            <p class="text-sm text-stone-500">@Cart.Count @(Cart.Count == 1 ? "item" : "items")</p>
+        </div>
+        <div class="flex items-center gap-2">
+            @if (Cart.Lines.Count > 0)
+            {
+                <button @onclick="Cart.Clear"
+                        class="flex items-center gap-1 text-red-500 hover:text-red-600 text-sm px-2 py-1 rounded-lg hover:bg-red-50 transition-colors">
+                    <Icon Name="trash-2" Class="w-3.5 h-3.5" />
+                    Clear
+                </button>
+            }
+            <button @onclick="OnClose"
+                    class="w-8 h-8 flex items-center justify-center text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-xl transition-colors">
+                <Icon Name="x" Class="w-5 h-5" />
+            </button>
+        </div>
+    </div>
+
+    <div class="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+        @if (Cart.Lines.Count == 0)
+        {
+            <div class="flex flex-col items-center justify-center h-full text-center py-12">
+                <div class="w-20 h-20 bg-stone-100 rounded-2xl flex items-center justify-center mb-4">
+                    <Icon Name="shopping-bag" Class="w-10 h-10 text-stone-300" />
+                </div>
+                <p class="text-stone-600 font-medium">Your cart is empty</p>
+                <p class="text-stone-400 text-sm mt-1">Add some delicious Filipino dishes!</p>
+            </div>
+        }
+        else
+        {
+            @foreach (var line in Cart.Lines)
+            {
+                <div class="flex items-center gap-3 p-3 bg-stone-50 rounded-xl">
+                    <img src="@line.Item.ImageUrl" alt="@line.Item.Name"
+                         class="w-14 h-14 rounded-lg object-cover flex-shrink-0"
+                         onerror="this.onerror=null;this.src='https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg'" />
+                    <div class="flex-1 min-w-0">
+                        <p class="font-medium text-stone-900 text-sm truncate">@line.Item.Name</p>
+                        <p class="text-amber-600 font-semibold text-sm">$@line.Subtotal.ToString("0.00")</p>
+                    </div>
+                    <div class="flex items-center gap-1.5 flex-shrink-0">
+                        <button @onclick="() => Cart.Remove(line.Item.Id)"
+                                class="w-7 h-7 flex items-center justify-center bg-white hover:bg-stone-100 text-stone-600 rounded-lg border border-stone-200 transition-colors">
+                            <Icon Name="minus" Class="w-3.5 h-3.5" />
+                        </button>
+                        <span class="w-5 text-center font-bold text-stone-900 text-sm">@line.Quantity</span>
+                        <button @onclick="() => Cart.Add(line.Item)"
+                                class="w-7 h-7 flex items-center justify-center bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-colors">
+                            <Icon Name="plus" Class="w-3.5 h-3.5" />
+                        </button>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+
+    @if (Cart.Lines.Count > 0)
+    {
+        <div class="px-5 py-4 border-t border-stone-100 space-y-3">
+            <div class="flex items-center justify-between text-sm text-stone-500">
+                <span>Subtotal</span>
+                <span>$@Cart.Total.ToString("0.00")</span>
+            </div>
+            <div class="flex items-center justify-between font-bold text-stone-900">
+                <span>Total</span>
+                <span class="text-lg">$@Cart.Total.ToString("0.00")</span>
+            </div>
+            <button @onclick="OnCheckout"
+                    class="w-full bg-amber-500 hover:bg-amber-600 text-white py-3.5 rounded-xl font-semibold text-base transition-all duration-200 shadow-md hover:shadow-lg active:scale-98">
+                Place Order · $@Cart.Total.ToString("0.00")
+            </button>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback OnCheckout { get; set; }
+
+    protected override void OnInitialized() => Cart.OnChange += StateHasChanged;
+
+    public void Dispose() => Cart.OnChange -= StateHasChanged;
+}
