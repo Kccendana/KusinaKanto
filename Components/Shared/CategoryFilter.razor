@@ -1,0 +1,45 @@
+<div class="sticky top-16 z-40 bg-white/95 backdrop-blur-sm border-b border-stone-100 shadow-sm">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+        <div class="flex gap-1 overflow-x-auto py-3 scrollbar-hide">
+            <button @onclick="@(() => OnChange.InvokeAsync("all"))"
+                    class="@PillClass("all")">
+                All
+            </button>
+            @foreach (var cat in Categories)
+            {
+                <button @onclick="@(() => OnChange.InvokeAsync(cat.Id))"
+                        class="@PillClass(cat.Id) flex items-center gap-1.5">
+                    <span>@IconFor(cat.Name)</span>
+                    <span>@cat.Name</span>
+                </button>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public IReadOnlyList<MenuCategory> Categories { get; set; } = new List<MenuCategory>();
+    [Parameter] public string Active { get; set; } = "all";
+    [Parameter] public EventCallback<string> OnChange { get; set; }
+
+    private static readonly Dictionary<string, string> Emoji = new()
+    {
+        ["Starters"] = "🥟",
+        ["Soups & Stews"] = "🍲",
+        ["Rice Dishes"] = "🍛",
+        ["Grilled & Fried"] = "🍖",
+        ["Noodles"] = "🍜",
+        ["Desserts"] = "🍮",
+        ["Drinks"] = "🥤",
+    };
+
+    private string IconFor(string name) => Emoji.TryGetValue(name, out var e) ? e : "🍽️";
+
+    private string PillClass(string id)
+    {
+        const string baseClass = "flex-shrink-0 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200";
+        return Active == id
+            ? $"{baseClass} bg-amber-500 text-white shadow-md"
+            : $"{baseClass} text-stone-600 hover:bg-stone-100";
+    }
+}
