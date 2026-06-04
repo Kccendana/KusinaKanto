@@ -1,5 +1,7 @@
 using KusinaKanto.Components;
 using KusinaKanto.Services;
+using Microsoft.EntityFrameworkCore;
+using KusinaKanto.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,13 +11,24 @@ builder.Services.AddRazorComponents()
 
 // Data seam — swap these in-memory implementations for the EF Core + SQL Server
 // backend when it's ready; the UI depends only on the interfaces.
-builder.Services.AddSingleton<IMenuService, InMemoryMenuService>();
+builder.Services.AddDbContext<KusinaKantoDbContext>(options =>
+    options.UseSqlite("Data Source=KusinaKanto.db"));
+
+builder.Services.AddScoped<IMenuService, EfMenuService>();
 builder.Services.AddScoped<IOrderService, InMemoryOrderService>();
 
 // Per-session cart.
 builder.Services.AddScoped<CartState>();
 
 var app = builder.Build();
+// Seed the database with initial menu data if it's empty.
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider
+        .GetRequiredService<KusinaKantoDbContext>();
+
+    await DbInitializer.SeedAsync(db);
+}
 
 if (!app.Environment.IsDevelopment())
 {
