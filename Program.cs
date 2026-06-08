@@ -9,13 +9,14 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// Data seam — swap these in-memory implementations for the EF Core + SQL Server
-// backend when it's ready; the UI depends only on the interfaces.
+// Data layer — EF Core + SQLite. The UI depends only on IMenuService / IOrderService.
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? "Data Source=KusinaKanto.db";
 builder.Services.AddDbContext<KusinaKantoDbContext>(options =>
-    options.UseSqlite("Data Source=KusinaKanto.db"));
+    options.UseSqlite(connectionString));
 
 builder.Services.AddScoped<IMenuService, EfMenuService>();
-builder.Services.AddScoped<IOrderService, InMemoryOrderService>();
+builder.Services.AddScoped<IOrderService, EfOrderService>();
 
 // Per-session cart.
 builder.Services.AddScoped<CartState>();
