@@ -1,0 +1,49 @@
+@inherits LayoutComponentBase
+
+<div class="min-h-screen bg-stone-50">
+    <aside class="fixed top-0 left-0 bottom-0 w-64 bg-stone-900 text-stone-300 flex flex-col z-40">
+        <div class="flex items-center gap-3 px-5 h-16 border-b border-white/10">
+            <img src="log.png" alt="KusinaKanto" class="w-9 h-9 rounded-full" />
+            <div>
+                <div class="text-white font-bold leading-tight">KusinaKanto</div>
+                <div class="text-[11px] text-amber-400 uppercase tracking-widest">Admin</div>
+            </div>
+        </div>
+
+        <nav class="flex-1 px-3 py-4 space-y-1">
+            <NavLink href="/admin" Match="NavLinkMatch.All" class="@NavClass">
+                <Icon Name="layout-dashboard" Class="w-4 h-4" />
+                <span>Dashboard</span>
+            </NavLink>
+            <NavLink href="/admin/menu" class="@NavClass">
+                <Icon Name="utensils-crossed" Class="w-4 h-4" />
+                <span>Menu</span>
+            </NavLink>
+            <NavLink href="/admin/staff" class="@NavClass">
+                <Icon Name="users" Class="w-4 h-4" />
+                <span>Staff</span>
+            </NavLink>
+        </nav>
+
+        <div class="px-3 py-4 border-t border-white/10">
+            <a href="/" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-stone-300 hover:bg-white/5 transition-colors">
+                <Icon Name="external-link" Class="w-4 h-4" />
+                <span>View site</span>
+            </a>
+        </div>
+    </aside>
+
+    <div class="pl-64">
+        <main class="max-w-6xl mx-auto px-6 py-8">
+            @Body
+        </main>
+    </div>
+</div>
+
+@code {
+    // NavLink adds the "active" class on match; the compound [&.active] selector
+    // reliably wins over the base text colour.
+    private const string NavClass =
+        "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-stone-300 " +
+        "hover:bg-white/5 hover:text-white transition-colors [&.active]:bg-amber-500 [&.active]:text-white";
+}

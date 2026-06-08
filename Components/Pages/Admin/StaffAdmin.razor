@@ -1,0 +1,158 @@
+@page "/admin/staff"
+@layout AdminLayout
+@inject IStaffService StaffService
+
+<PageTitle>Staff · KusinaKanto Admin</PageTitle>
+
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-stone-900">Staff</h1>
+        <p class="text-stone-500">@_staff.Count members · @_staff.Count(s => s.IsActive) active.</p>
+    </div>
+    <button @onclick="OpenAdd"
+            class="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl font-medium text-sm transition-colors shadow-sm">
+        <Icon Name="plus" Class="w-4 h-4" /> Add staff
+    </button>
+</div>
+
+<div class="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden">
+    <table class="w-full text-sm">
+        <thead class="text-left text-stone-400 uppercase text-xs tracking-wide">
+            <tr class="border-b border-stone-100">
+                <th class="px-5 py-3 font-semibold">Name</th>
+                <th class="px-5 py-3 font-semibold">Role</th>
+                <th class="px-5 py-3 font-semibold">Contact</th>
+                <th class="px-5 py-3 font-semibold">Status</th>
+                <th class="px-5 py-3 font-semibold text-right">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var s in _staff)
+            {
+                <tr class="border-b border-stone-50 last:border-0 hover:bg-stone-50/50">
+                    <td class="px-5 py-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-sm flex-shrink-0">@Initials(s.Name)</div>
+                            <span class="font-medium text-stone-900">@s.Name</span>
+                        </div>
+                    </td>
+                    <td class="px-5 py-3">
+                        <span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium @RoleClass(s.Role)">@s.Role</span>
+                    </td>
+                    <td class="px-5 py-3 text-stone-600">
+                        <div>@(string.IsNullOrEmpty(s.Email) ? "—" : s.Email)</div>
+                        <div class="text-xs text-stone-400">@s.Phone</div>
+                    </td>
+                    <td class="px-5 py-3">
+                        @if (s.IsActive)
+                        {
+                            <span class="inline-flex items-center gap-1 text-green-700 text-xs font-medium"><Icon Name="circle-check" Class="w-4 h-4" /> Active</span>
+                        }
+                        else
+                        {
+                            <span class="text-stone-400 text-xs font-medium">Inactive</span>
+                        }
+                    </td>
+                    <td class="px-5 py-3">
+                        <div class="flex items-center justify-end gap-1">
+                            <button @onclick="() => OpenEdit(s)" title="Edit"
+                                    class="w-8 h-8 flex items-center justify-center text-stone-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors">
+                                <Icon Name="square-pen" Class="w-4 h-4" />
+                            </button>
+                            <button @onclick="() => AskDelete(s)" title="Delete"
+                                    class="w-8 h-8 flex items-center justify-center text-stone-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                <Icon Name="trash-2" Class="w-4 h-4" />
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    @if (_staff.Count == 0)
+    {
+        <div class="px-5 py-10 text-center text-stone-400">No staff yet. Add your first member.</div>
+    }
+</div>
+
+@if (_showForm)
+{
+    <StaffFormModal Member="_editing" IsNew="_isNew" OnSave="Save" OnCancel="() => _showForm = false" />
+}
+
+@if (_deleting is not null)
+{
+    <ConfirmModal Title="Remove staff member"
+                  Message="@($"Remove {_deleting.Name}? This can't be undone.")"
+                  ConfirmLabel="Remove"
+                  OnConfirm="ConfirmDelete" OnCancel="() => _deleting = null" />
+}
+
+@code {
+    private IReadOnlyList<Staff> _staff = new List<Staff>();
+
+    private bool _showForm;
+    private bool _isNew;
+    private Staff _editing = new();
+    private Staff? _deleting;
+
+    protected override async Task OnInitializedAsync() => await Load();
+
+    private async Task Load() => _staff = await StaffService.GetAllAsync();
+
+    private void OpenAdd()
+    {
+        _isNew = true;
+        _editing = new Staff { Role = StaffRole.Cashier, IsActive = true };
+        _showForm = true;
+    }
+
+    private void OpenEdit(Staff s)
+    {
+        _isNew = false;
+        _editing = Clone(s);
+        _showForm = true;
+    }
+
+    private async Task Save(Staff s)
+    {
+        if (_isNew)
+            await StaffService.CreateAsync(s);
+        else
+            await StaffService.UpdateAsync(s);
+        _showForm = false;
+        await Load();
+    }
+
+    private void AskDelete(Staff s) => _deleting = s;
+
+    private async Task ConfirmDelete()
+    {
+        if (_deleting is not null)
+            await StaffService.DeleteAsync(_deleting.Id);
+        _deleting = null;
+        await Load();
+    }
+
+    private static string Initials(string name)
+    {
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 0) return "?";
+        return parts.Length == 1
+            ? parts[0][..1].ToUpper()
+            : (parts[0][..1] + parts[^1][..1]).ToUpper();
+    }
+
+    private static string RoleClass(StaffRole role) => role switch
+    {
+        StaffRole.Admin => "bg-purple-100 text-purple-700",
+        StaffRole.Cashier => "bg-blue-100 text-blue-700",
+        StaffRole.Kitchen => "bg-orange-100 text-orange-700",
+        _ => "bg-stone-100 text-stone-700"
+    };
+
+    private static Staff Clone(Staff s) => new()
+    {
+        Id = s.Id, Name = s.Name, Role = s.Role, Email = s.Email, Phone = s.Phone, IsActive = s.IsActive
+    };
+}

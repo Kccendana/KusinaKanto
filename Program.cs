@@ -18,6 +18,10 @@ builder.Services.AddDbContext<KusinaKantoDbContext>(options =>
 builder.Services.AddScoped<IMenuService, EfMenuService>();
 builder.Services.AddScoped<IOrderService, EfOrderService>();
 
+// Admin-side CRUD services.
+builder.Services.AddScoped<IMenuAdminService, EfMenuAdminService>();
+builder.Services.AddScoped<IStaffService, EfStaffService>();
+
 // Per-session cart.
 builder.Services.AddScoped<CartState>();
 

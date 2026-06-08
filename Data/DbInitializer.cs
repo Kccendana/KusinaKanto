@@ -9,6 +9,18 @@ public static class DbInitializer
     {
         db.Database.EnsureCreated();
 
+        // Seed staff independently of the menu so it runs even on an existing menu db.
+        if (!db.Staff.Any())
+        {
+            db.Staff.AddRange(
+                new Staff { Id = "s1", Name = "Maria Santos",   Role = StaffRole.Admin,   Email = "maria@kusinakanto.ph",  Phone = "0917 555 0101", IsActive = true },
+                new Staff { Id = "s2", Name = "Jose Rizal",      Role = StaffRole.Cashier, Email = "jose@kusinakanto.ph",   Phone = "0917 555 0102", IsActive = true },
+                new Staff { Id = "s3", Name = "Lualhati Bautista", Role = StaffRole.Kitchen, Email = "lua@kusinakanto.ph",  Phone = "0917 555 0103", IsActive = true },
+                new Staff { Id = "s4", Name = "Andres Bonifacio", Role = StaffRole.Kitchen, Email = "andres@kusinakanto.ph", Phone = "0917 555 0104", IsActive = false }
+            );
+            await db.SaveChangesAsync();
+        }
+
         if (db.MenuCategories.Any() || db.MenuItems.Any())
             return;
 
