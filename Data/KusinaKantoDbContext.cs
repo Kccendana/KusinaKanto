@@ -19,11 +19,16 @@ public class KusinaKantoDbContext : DbContext
 
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
 
-      // Put OnModelCreating HERE
+    public DbSet<Staff> Staff => Set<Staff>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
-       
+        // An order owns its line items; deleting an order removes them too.
+        modelBuilder.Entity<Order>()
+            .HasMany(o => o.Items)
+            .WithOne()
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

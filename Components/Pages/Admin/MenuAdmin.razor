@@ -1,0 +1,161 @@
+@page "/admin/menu"
+@layout AdminLayout
+@inject IMenuAdminService MenuSvc
+
+<PageTitle>Menu · KusinaKanto Admin</PageTitle>
+
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-stone-900">Menu</h1>
+        <p class="text-stone-500">@_items.Count items across @_categories.Count categories.</p>
+    </div>
+    <button @onclick="OpenAdd"
+            class="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl font-medium text-sm transition-colors shadow-sm">
+        <Icon Name="plus" Class="w-4 h-4" /> Add item
+    </button>
+</div>
+
+<div class="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden">
+    <table class="w-full text-sm">
+        <thead class="text-left text-stone-400 uppercase text-xs tracking-wide">
+            <tr class="border-b border-stone-100">
+                <th class="px-5 py-3 font-semibold">Item</th>
+                <th class="px-5 py-3 font-semibold">Category</th>
+                <th class="px-5 py-3 font-semibold text-right">Price</th>
+                <th class="px-5 py-3 font-semibold">Tags</th>
+                <th class="px-5 py-3 font-semibold text-right">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in _items)
+            {
+                <tr class="border-b border-stone-50 last:border-0 hover:bg-stone-50/50">
+                    <td class="px-5 py-3">
+                        <div class="flex items-center gap-3">
+                            <img src="@item.ImageUrl" alt="@item.Name"
+                                 class="w-10 h-10 rounded-lg object-cover flex-shrink-0 bg-stone-100"
+                                 onerror="this.onerror=null;this.src='https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg'" />
+                            <div class="min-w-0">
+                                <p class="font-medium text-stone-900 truncate">@item.Name</p>
+                                @if (!item.IsAvailable)
+                                {
+                                    <span class="text-xs text-stone-400">Hidden from menu</span>
+                                }
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-5 py-3 text-stone-600">@CategoryName(item.CategoryId)</td>
+                    <td class="px-5 py-3 text-right font-semibold text-stone-900">$@item.Price.ToString("0.00")</td>
+                    <td class="px-5 py-3">
+                        <div class="flex gap-1">
+                            @if (item.IsBestseller)
+                            {
+                                <span class="inline-flex items-center gap-1 bg-amber-100 text-amber-700 text-xs font-medium px-2 py-0.5 rounded-full"><Icon Name="star" Class="w-3 h-3" Fill="true" /> Best</span>
+                            }
+                            @if (item.IsSpicy)
+                            {
+                                <span class="inline-flex items-center gap-1 bg-red-100 text-red-700 text-xs font-medium px-2 py-0.5 rounded-full"><Icon Name="flame" Class="w-3 h-3" Fill="true" /> Spicy</span>
+                            }
+                        </div>
+                    </td>
+                    <td class="px-5 py-3">
+                        <div class="flex items-center justify-end gap-1">
+                            <button @onclick="() => OpenEdit(item)" title="Edit"
+                                    class="w-8 h-8 flex items-center justify-center text-stone-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors">
+                                <Icon Name="square-pen" Class="w-4 h-4" />
+                            </button>
+                            <button @onclick="() => AskDelete(item)" title="Delete"
+                                    class="w-8 h-8 flex items-center justify-center text-stone-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                <Icon Name="trash-2" Class="w-4 h-4" />
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    @if (_items.Count == 0)
+    {
+        <div class="px-5 py-10 text-center text-stone-400">No menu items yet. Add your first one.</div>
+    }
+</div>
+
+@if (_showForm)
+{
+    <MenuItemFormModal Item="_editing" Categories="_categories" IsNew="_isNew"
+                       OnSave="SaveItem" OnCancel="() => _showForm = false" />
+}
+
+@if (_deleting is not null)
+{
+    <ConfirmModal Title="Delete menu item"
+                  Message="@($"Remove \"{_deleting.Name}\" from the menu? This can't be undone.")"
+                  OnConfirm="ConfirmDelete" OnCancel="() => _deleting = null" />
+}
+
+@code {
+    private IReadOnlyList<MenuItem> _items = new List<MenuItem>();
+    private IReadOnlyList<MenuCategory> _categories = new List<MenuCategory>();
+
+    private bool _showForm;
+    private bool _isNew;
+    private MenuItem _editing = new();
+    private MenuItem? _deleting;
+
+    protected override async Task OnInitializedAsync() => await Load();
+
+    private async Task Load()
+    {
+        _categories = await MenuSvc.GetCategoriesAsync();
+        _items = await MenuSvc.GetItemsAsync();
+    }
+
+    private string CategoryName(string id) =>
+        _categories.FirstOrDefault(c => c.Id == id)?.Name ?? "—";
+
+    private void OpenAdd()
+    {
+        _isNew = true;
+        _editing = new MenuItem
+        {
+            CategoryId = _categories.FirstOrDefault()?.Id ?? "",
+            IsAvailable = true
+        };
+        _showForm = true;
+    }
+
+    private void OpenEdit(MenuItem item)
+    {
+        _isNew = false;
+        _editing = Clone(item);
+        _showForm = true;
+    }
+
+    private async Task SaveItem(MenuItem item)
+    {
+        if (_isNew)
+            await MenuSvc.CreateItemAsync(item);
+        else
+            await MenuSvc.UpdateItemAsync(item);
+
+        _showForm = false;
+        await Load();
+    }
+
+    private void AskDelete(MenuItem item) => _deleting = item;
+
+    private async Task ConfirmDelete()
+    {
+        if (_deleting is not null)
+            await MenuSvc.DeleteItemAsync(_deleting.Id);
+        _deleting = null;
+        await Load();
+    }
+
+    private static MenuItem Clone(MenuItem i) => new()
+    {
+        Id = i.Id, CategoryId = i.CategoryId, Name = i.Name, Description = i.Description,
+        Price = i.Price, ImageUrl = i.ImageUrl, IsAvailable = i.IsAvailable,
+        IsBestseller = i.IsBestseller, IsSpicy = i.IsSpicy
+    };
+}
