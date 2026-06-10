@@ -1,5 +1,6 @@
 @page "/admin/menu"
 @layout AdminLayout
+@attribute [Authorize(Roles = "Admin")]
 @inject IMenuAdminService MenuSvc
 
 <PageTitle>Menu · KusinaKanto Admin</PageTitle>

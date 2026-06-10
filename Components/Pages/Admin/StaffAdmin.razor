@@ -1,5 +1,6 @@
 @page "/admin/staff"
 @layout AdminLayout
+@attribute [Authorize(Roles = "Admin")]
 @inject IStaffService StaffService
 
 <PageTitle>Staff · KusinaKanto Admin</PageTitle>

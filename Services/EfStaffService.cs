@@ -16,6 +16,10 @@ public class EfStaffService : IStaffService
     public async Task<IReadOnlyList<Staff>> GetAllAsync() =>
         await _db.Staff.AsNoTracking().OrderBy(s => s.Name).ToListAsync();
 
+    public async Task<Staff?> GetByEmailAsync(string email) =>
+        await _db.Staff.AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Email.ToLower() == email.ToLower());
+
     public async Task CreateAsync(Staff staff)
     {
         if (string.IsNullOrEmpty(staff.Id))

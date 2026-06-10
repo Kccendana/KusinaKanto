@@ -6,6 +6,7 @@ namespace KusinaKanto.Services;
 public interface IStaffService
 {
     Task<IReadOnlyList<Staff>> GetAllAsync();
+    Task<Staff?> GetByEmailAsync(string email);
     Task CreateAsync(Staff staff);
     Task UpdateAsync(Staff staff);
     Task DeleteAsync(string id);

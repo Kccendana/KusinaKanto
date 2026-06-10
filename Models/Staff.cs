@@ -19,4 +19,7 @@ public class Staff
     public string Email { get; set; } = "";
     public string Phone { get; set; } = "";
     public bool IsActive { get; set; } = true;
+
+    /// <summary>Hashed login password. Empty for staff who can't sign in.</summary>
+    public string PasswordHash { get; set; } = "";
 }
