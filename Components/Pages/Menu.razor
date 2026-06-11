@@ -1,4 +1,6 @@
 @page "/"
+@page "/menu"
+@page "/menu/{TableNumber:int}"
 @inject IMenuService MenuService
 @inject IOrderService OrderService
 @inject CartState Cart
@@ -86,11 +88,16 @@
 
     @if (_checkoutOpen)
     {
-        <CheckoutModal OnClose="() => _checkoutOpen = false" OnSubmit="HandleCheckout" />
+        <CheckoutModal
+    TableNumber="@TableNumber"
+    OnClose="() => _checkoutOpen = false"
+    OnSubmit="HandleCheckout" />
     }
 </div>
 
 @code {
+    [Parameter]
+    public int? TableNumber { get; set; }
     private IReadOnlyList<MenuCategory> _categories = new List<MenuCategory>();
     private IReadOnlyList<MenuItem> _items = new List<MenuItem>();
     private bool _loading = true;
@@ -153,32 +160,44 @@
         }
     }
 
-    private async Task HandleCheckout(CheckoutDetails details)
+   private async Task HandleCheckout(CheckoutDetails details)
+{
+    Console.WriteLine($"TableNumber = {TableNumber}");
+    Console.WriteLine("Checkout clicked");
+
+    var order = new Order
     {
-        var order = new Order
+        TableNumber = TableNumber,
+
+        TotalAmount = Cart.Total,
+
+        Items = Cart.Lines.Select(l => new OrderItem
         {
-            CustomerName = details.Name,
-            CustomerEmail = details.Email,
-            TableNumber = details.Table,
-            Notes = details.Notes,
-            TotalAmount = Cart.Total,
-            Items = Cart.Lines.Select(l => new OrderItem
-            {
-                MenuItemId = l.Item.Id,
-                Name = l.Item.Name,
-                Quantity = l.Quantity,
-                UnitPrice = l.Item.Price,
-                Subtotal = l.Subtotal
-            }).ToList()
-        };
+            MenuItemId = l.Item.Id,
+            Name = l.Item.Name,
+            Quantity = l.Quantity,
+            UnitPrice = l.Item.Price,
+            Subtotal = l.Subtotal
+        }).ToList()
+    };
 
-        var placed = await OrderService.PlaceOrderAsync(order);
+    var placed = await OrderService.PlaceOrderAsync(order);
 
-        Cart.LastOrder = placed;
-        Cart.LastItems = Cart.Lines.Select(l => new CartLine { Item = l.Item, Quantity = l.Quantity }).ToList();
-        Cart.Clear();
+    Console.WriteLine($"Saved order {placed.Id}");
 
-        _checkoutOpen = false;
-        Nav.NavigateTo("/confirmation");
-    }
+    Cart.LastOrder = placed;
+    Cart.LastItems = Cart.Lines
+        .Select(l => new CartLine
+        {
+            Item = l.Item,
+            Quantity = l.Quantity
+        })
+        .ToList();
+
+    Cart.Clear();
+
+    _checkoutOpen = false;
+
+    Nav.NavigateTo("/confirmation");
+}
 }

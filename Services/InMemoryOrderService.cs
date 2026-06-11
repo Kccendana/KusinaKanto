@@ -12,8 +12,6 @@ public class InMemoryOrderService : IOrderService
 
     public Task<Order> PlaceOrderAsync(Order order)
     {
-        order.Id = Guid.NewGuid().ToString("N");
-        order.CreatedAt = DateTime.Now;
         order.Status = OrderStatus.Pending;
         _orders.Add(order);
         return Task.FromResult(order);

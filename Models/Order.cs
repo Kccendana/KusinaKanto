@@ -14,14 +14,13 @@ public enum OrderStatus
 public class Order
 {
     [Key]
-    public string Id { get; set; } = "";
-    public string CustomerName { get; set; } = "";
-    public string CustomerEmail { get; set; } = "";
-    public string TableNumber { get; set; } = "";
+    public int Id { get; set; }
+    public int? TableNumber { get; set; } = null;
+    public OrderType OrderType { get; set; } = OrderType.DineIn;
     public OrderStatus Status { get; set; } = OrderStatus.Pending;
     public decimal TotalAmount { get; set; }
-    public string Notes { get; set; } = "";
-    public DateTime CreatedAt { get; set; }
+    
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public List<OrderItem> Items { get; set; } = new();
 }
 
