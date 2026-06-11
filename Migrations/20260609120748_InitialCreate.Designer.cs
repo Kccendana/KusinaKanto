@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace KusinaKanto.Migrations
 {
     [DbContext(typeof(KusinaKantoDbContext))]
-    [Migration("20260608140540_InitialCreate")]
+    [Migration("20260609120748_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -81,30 +81,21 @@ namespace KusinaKanto.Migrations
 
             modelBuilder.Entity("KusinaKanto.Models.Order", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("TEXT");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("CustomerEmail")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("CustomerName")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Notes")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                    b.Property<int>("OrderType")
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("Status")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("TableNumber")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                    b.Property<int?>("TableNumber")
+                        .HasColumnType("INTEGER");
 
                     b.Property<decimal>("TotalAmount")
                         .HasColumnType("TEXT");
@@ -116,8 +107,9 @@ namespace KusinaKanto.Migrations
 
             modelBuilder.Entity("KusinaKanto.Models.OrderItem", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("TEXT");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("MenuItemId")
                         .IsRequired()
@@ -127,8 +119,8 @@ namespace KusinaKanto.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("OrderId")
-                        .HasColumnType("TEXT");
+                    b.Property<int?>("OrderId")
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("Quantity")
                         .HasColumnType("INTEGER");

@@ -13,7 +13,18 @@
                         <Icon Name="circle-check-big" Class="w-10 h-10 text-white" />
                     </div>
                     <h1 class="text-2xl font-bold mb-1">Order Placed!</h1>
-                    <p class="text-amber-100 text-sm">Thank you, @_order.CustomerName!</p>
+                    @if (_order.TableNumber.HasValue)
+{
+    <p class="text-amber-100 text-sm">
+        Table @_order.TableNumber Order Received
+    </p>
+}
+else
+{
+    <p class="text-amber-100 text-sm">
+        Take-Out Order Received
+    </p>
+}
                     <div class="mt-3 bg-white/20 rounded-xl px-4 py-2 inline-block">
                         <p class="text-xs text-amber-100">Order ID</p>
                         <p class="font-mono font-bold text-sm">#@OrderCode</p>
@@ -65,13 +76,18 @@
                             <span>Total Paid</span>
                             <span>$@_order.TotalAmount.ToString("0.00")</span>
                         </div>
-                        @if (!string.IsNullOrEmpty(_order.TableNumber))
-                        {
-                            <div class="flex items-center justify-between mt-2 text-sm text-stone-500">
-                                <span>Table</span>
-                                <span>@_order.TableNumber</span>
-                            </div>
-                        }
+                        <div class="flex items-center justify-between mt-2 text-sm text-stone-500">
+    <span>Order Type</span>
+
+    @if (_order.TableNumber.HasValue)
+    {
+        <span>Table @_order.TableNumber</span>
+    }
+    else
+    {
+        <span>Take-Out</span>
+    }
+</div>
                     </div>
 
                     <button @onclick="OrderMore"
@@ -91,7 +107,7 @@
     private Order? _order;
     private List<CartLine> _items = new();
 
-    private string OrderCode => _order is null ? "" : _order.Id[..Math.Min(8, _order.Id.Length)].ToUpperInvariant();
+    private string OrderCode => _order?.Id.ToString("D4") ?? "";
     private int CurrentStep => _order is null ? 0 : (int)_order.Status;
 
     protected override void OnInitialized()

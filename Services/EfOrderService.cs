@@ -16,20 +16,12 @@ public class EfOrderService : IOrderService
     }
 
     public async Task<Order> PlaceOrderAsync(Order order)
-    {
-        order.Id = Guid.NewGuid().ToString("N");
-        order.CreatedAt = DateTime.Now;
-        order.Status = OrderStatus.Pending;
+{
+    order.Status = OrderStatus.Pending;
 
-        // The UI builds order items without ids; give each a primary key so they
-        // don't collide on the empty-string default.
-        foreach (var item in order.Items)
-        {
-            item.Id = Guid.NewGuid().ToString("N");
-        }
+    _db.Orders.Add(order);
+    await _db.SaveChangesAsync();
 
-        _db.Orders.Add(order);
-        await _db.SaveChangesAsync();
-        return order;
-    }
+    return order;
+}
 }
