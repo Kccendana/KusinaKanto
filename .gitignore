@@ -5,3 +5,7 @@ node_modules/
 .gstack/
 
 docs/
+
+# SQLite runtime files (the .db itself is intentionally committed)
+*.db-shm
+*.db-wal
