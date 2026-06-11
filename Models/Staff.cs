@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace KusinaKanto.Models;
 
@@ -22,4 +23,8 @@ public class Staff
 
     /// <summary>Hashed login password. Empty for staff who can't sign in.</summary>
     public string PasswordHash { get; set; } = "";
+
+    /// <summary>Plain-text password typed in the admin form; hashed on save, never stored.</summary>
+    [NotMapped]
+    public string? NewPassword { get; set; }
 }

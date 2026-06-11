@@ -36,6 +36,17 @@
                 <input type="text" @bind="Member.Phone" placeholder="0917 555 0100" class="@InputClass(false)" />
             </div>
 
+            <div>
+                <label class="block text-sm font-medium text-stone-700 mb-1.5">
+                    @(IsNew ? "Password" : "New Password")
+                    <span class="font-normal text-stone-400">
+                        — @(IsNew ? "set this so an Admin can sign in" : "leave blank to keep current")
+                    </span>
+                </label>
+                <input type="password" @bind="Member.NewPassword" placeholder="••••••••" autocomplete="new-password"
+                       class="@InputClass(false)" />
+            </div>
+
             <label class="flex items-center gap-2 text-sm text-stone-700 pt-1">
                 <input type="checkbox" @bind="Member.IsActive" class="accent-amber-500 w-4 h-4" /> Active
             </label>
