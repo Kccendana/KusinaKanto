@@ -22,6 +22,9 @@ builder.Services.AddScoped<IOrderService, EfOrderService>();
 builder.Services.AddScoped<IMenuAdminService, EfMenuAdminService>();
 builder.Services.AddScoped<IStaffService, EfStaffService>();
 
+//
+builder.Services.AddScoped<IImageService, ImageService>();
+
 // Per-session cart.
 builder.Services.AddScoped<CartState>();
 
@@ -40,6 +43,8 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
     app.UseHsts();
 }
+// For serving uploaded images and other static assets.
+app.UseStaticFiles();
 
 app.UseHttpsRedirection();
 app.UseAntiforgery();

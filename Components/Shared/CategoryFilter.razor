@@ -9,7 +9,7 @@
             {
                 <button @onclick="@(() => OnChange.InvokeAsync(cat.Id))"
                         class="@PillClass(cat.Id) flex items-center gap-1.5">
-                    <span>@IconFor(cat.Name)</span>
+                    @* <span>@IconFor(cat.Name)</span> *@
                     <span>@cat.Name</span>
                 </button>
             }
@@ -22,7 +22,7 @@
     [Parameter] public string Active { get; set; } = "all";
     [Parameter] public EventCallback<string> OnChange { get; set; }
 
-    private static readonly Dictionary<string, string> Emoji = new()
+    @* private static readonly Dictionary<string, string> Emoji = new()
     {
         ["Starters"] = "🥟",
         ["Soups & Stews"] = "🍲",
@@ -31,9 +31,9 @@
         ["Noodles"] = "🍜",
         ["Desserts"] = "🍮",
         ["Drinks"] = "🥤",
-    };
+    }; *@
 
-    private string IconFor(string name) => Emoji.TryGetValue(name, out var e) ? e : "🍽️";
+    @* private string IconFor(string name) => Emoji.TryGetValue(name, out var e) ? e : "🍽️"; *@
 
     private string PillClass(string id)
     {
