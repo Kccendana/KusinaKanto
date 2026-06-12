@@ -1,5 +1,6 @@
 @page "/admin"
 @layout AdminLayout
+@attribute [Authorize(Roles = "Admin")]
 @using Microsoft.EntityFrameworkCore
 @using KusinaKanto.Data
 @inject IMenuAdminService MenuAdmin

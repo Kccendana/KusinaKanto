@@ -1,6 +1,9 @@
 @page "/admin/staff"
 @layout AdminLayout
+@attribute [Authorize(Roles = "Admin")]
+@using Microsoft.AspNetCore.Identity
 @inject IStaffService StaffService
+@inject IPasswordHasher<Staff> Hasher
 
 <PageTitle>Staff · KusinaKanto Admin</PageTitle>
 
@@ -116,6 +119,11 @@
 
     private async Task Save(Staff s)
     {
+        // Hash a newly entered password; leaving it blank keeps the current one.
+        if (!string.IsNullOrWhiteSpace(s.NewPassword))
+            s.PasswordHash = Hasher.HashPassword(s, s.NewPassword);
+        s.NewPassword = null;
+
         if (_isNew)
             await StaffService.CreateAsync(s);
         else
@@ -153,6 +161,7 @@
 
     private static Staff Clone(Staff s) => new()
     {
-        Id = s.Id, Name = s.Name, Role = s.Role, Email = s.Email, Phone = s.Phone, IsActive = s.IsActive
+        Id = s.Id, Name = s.Name, Role = s.Role, Email = s.Email, Phone = s.Phone, IsActive = s.IsActive,
+        PasswordHash = s.PasswordHash
     };
 }
