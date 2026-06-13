@@ -1,6 +1,5 @@
 @page "/"
-@page "/menu"
-@page "/menu/{TableNumber:int}"
+@page "/{TableNumber:int}"
 @inject IMenuService MenuService
 @inject IOrderService OrderService
 @inject CartState Cart
@@ -168,6 +167,10 @@
     var order = new Order
     {
         TableNumber = TableNumber,
+        
+        OrderType = TableNumber.HasValue
+        ? OrderType.DineIn
+        : OrderType.TakeOut,
 
         TotalAmount = Cart.Total,
 
