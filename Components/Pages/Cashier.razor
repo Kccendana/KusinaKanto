@@ -1,0 +1,247 @@
+@page "/cashier"
+@layout MainLayout
+@attribute [Authorize(Roles = "Admin,Cashier")]
+
+@using Microsoft.EntityFrameworkCore
+@using KusinaKanto.Data
+@using KusinaKanto.Models
+
+@inject KusinaKantoDbContext Db
+
+<PageTitle>Cashier</PageTitle>
+
+<div class="min-h-screen bg-stone-50">
+
+<!-- Header -->
+<div class="sticky top-0 z-10 bg-white border-b border-stone-200 shadow-sm">
+       <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+    <div>
+        <h1 class="text-3xl font-bold text-stone-900">
+            Cashier Display
+        </h1>
+    </div>
+
+    <div class="flex items-center gap-4">
+
+        <div class="bg-amber-100 text-amber-800 px-4 py-2 rounded-xl font-semibold">
+            @_orders.Count Active Orders
+        </div>
+
+        <form method="post" action="/auth/logout" data-enhance="false">
+            <button type="submit"
+                    class="bg-stone-900 hover:bg-stone-800 text-white px-4 py-2 rounded-xl font-medium transition flex items-center gap-2">
+                <Icon Name="log-out" Class="w-4 h-4" />
+                <span>Log out</span>
+            </button>
+        </form>
+
+    </div>
+</div>
+</div>
+
+<!-- Content -->
+<div class="max-w-7xl mx-auto p-6">
+
+    @if (_orders.Count == 0)
+    {
+        <div class="bg-white rounded-3xl p-16 text-center shadow-sm border border-stone-100">
+            <h2 class="text-2xl font-bold text-stone-700">
+                No Orders Waiting for Payment
+            </h2>
+
+            <p class="text-stone-400 mt-2">
+                Kitchen is still preparing orders.
+            </p>
+        </div>
+    }
+    else
+    {
+        <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+
+            @foreach (var order in _orders)
+            {
+                <div class="bg-white rounded-3xl shadow-lg border border-stone-200 overflow-hidden">
+
+                    <!-- Header -->
+                    <div class="bg-stone-900 text-white px-5 py-4">
+
+                        <div class="flex justify-between items-center">
+
+                            <div>
+                                <h2 class="text-xl font-bold">
+                                    @(order.OrderType == OrderType.DineIn
+                                        ? $"Dine-In • T{order.TableNumber}"
+                                        : $"Take-Out • #{order.Id:D3}")
+                                </h2>
+
+                                <p class="text-stone-300 text-sm">
+                                    Order #@order.Id
+                                </p>
+                            </div>
+
+                            <span class="bg-white/20 px-3 py-1 rounded-full text-sm font-semibold">
+                                READY
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                    <!-- Items -->
+                    <div class="p-5">
+
+                        <div class="space-y-2">
+                            @foreach (var item in order.Items)
+                            {
+                                <div class="flex justify-between">
+                                    <span>@item.Name</span>
+                                    <span class="font-semibold">
+                                        ×@item.Quantity
+                                    </span>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="mt-4 pt-4 border-t border-stone-200 flex justify-between items-center">
+                            <span class="font-semibold text-stone-600">
+                                Total
+                            </span>
+
+                            <span class="text-2xl font-bold text-stone-900">
+                                $@order.TotalAmount.ToString("0.00")
+                            </span>
+                        </div>
+
+                        <!-- Amount Received -->
+                        <div class="mt-5">
+
+                            <label class="block text-sm font-semibold text-stone-700 mb-2">
+                                Amount Received
+                            </label>
+
+                            <input type="number"
+                                   step="0.01"
+                                   min="0"
+                                   @bind="_payments[order.Id]"
+                                   class="w-full rounded-xl border border-stone-200 px-4 py-3 text-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition-colors" />
+
+                        </div>
+
+                        <!-- Change -->
+                        @{
+                            var received = _payments.GetValueOrDefault(order.Id);
+                            var change = received - order.TotalAmount;
+                        }
+
+                        <div class="mt-4">
+
+                            @if (received == 0)
+                            {
+                                <p class="text-stone-400">
+                                    Enter payment amount
+                                </p>
+                            }
+                            else if (received < order.TotalAmount)
+                            {
+                                <p class="font-bold text-red-600">
+                                    Need $@((order.TotalAmount - received).ToString("0.00")) more
+                                </p>
+                            }
+                            else
+                            {
+                                <p class="font-bold text-green-600">
+                                    Change: $@change.ToString("0.00")
+                                </p>
+                            }
+
+                        </div>
+
+                        <!-- Quick Buttons -->
+                        <div class="grid grid-cols-4 gap-2 mt-4">
+
+                            <button class="bg-stone-100 rounded-xl py-2 text-sm"
+                                    @onclick="() => SetAmount(order.Id, order.TotalAmount)">
+                                Exact
+                            </button>
+
+                            <button class="bg-stone-100 rounded-xl py-2 text-sm"
+                                    @onclick="() => SetAmount(order.Id, 20)">
+                                $20
+                            </button>
+
+                            <button class="bg-stone-100 rounded-xl py-2 text-sm"
+                                    @onclick="() => SetAmount(order.Id, 50)">
+                                $50
+                            </button>
+
+                            <button class="bg-stone-100 rounded-xl py-2 text-sm"
+                                    @onclick="() => SetAmount(order.Id, 100)">
+                                $100
+                            </button>
+
+                        </div>
+
+                        <!-- Complete -->
+                        <button class="w-full mt-5 bg-amber-500 hover:bg-amber-600 active:bg-amber-800 disabled:bg-stone-300 text-white py-4 rounded-2xl font-bold transition"
+                                disabled="@(received < order.TotalAmount)"
+                                @onclick="() => CompletePayment(order, received)">
+
+                            Complete Payment
+
+                        </button>
+
+                    </div>
+
+                </div>
+            }
+
+        </div>
+    }
+
+</div>
+
+
+</div>
+
+@code {
+
+
+private List<Order> _orders = new();
+
+private Dictionary<int, decimal> _payments = new();
+
+protected override async Task OnInitializedAsync()
+{
+    await LoadOrders();
+}
+
+private async Task LoadOrders()
+{
+    _orders = await Db.Orders
+        .Include(o => o.Items)
+        .Where(o => o.Status == OrderStatus.Ready)
+        .OrderBy(o => o.CreatedAt)
+        .ToListAsync();
+
+    foreach (var order in _orders)
+    {
+        if (!_payments.ContainsKey(order.Id))
+            _payments[order.Id] = 0;
+    }
+}
+
+private void SetAmount(int orderId, decimal amount)
+{
+    _payments[orderId] = amount;
+}
+
+private async Task CompletePayment(Order order, decimal amountReceived)
+{
+    order.Status = OrderStatus.Completed;
+
+    await Db.SaveChangesAsync();
+
+    _orders.Remove(order);
+}
+
+}

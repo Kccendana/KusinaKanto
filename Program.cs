@@ -12,11 +12,14 @@ using KusinaKanto.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Blazor Server (interactive Razor components).
+#region Blazor
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// Authentication & authorization — cookie-based admin login.
+builder.Services.AddCascadingAuthenticationState();
+#endregion
+
+#region Authentication & Authorization
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
@@ -24,96 +27,62 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.AccessDeniedPath = "/login";
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
     });
-builder.Services.AddAuthorization();
-builder.Services.AddCascadingAuthenticationState();
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<AuthenticationStateProvider, HttpContextAuthStateProvider>();
-builder.Services.AddSingleton<IPasswordHasher<Staff>, PasswordHasher<Staff>>();
 
-// Data layer — EF Core + SQLite. The UI depends only on IMenuService / IOrderService.
+builder.Services.AddAuthorization();
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddScoped<IPasswordHasher<Staff>, PasswordHasher<Staff>>();
+#endregion
+
+#region Database
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? "Data Source=KusinaKanto.db";
+
 builder.Services.AddDbContext<KusinaKantoDbContext>(options =>
     options.UseSqlite(connectionString));
+#endregion
 
+#region Application Services
 builder.Services.AddScoped<IMenuService, EfMenuService>();
 builder.Services.AddScoped<IOrderService, EfOrderService>();
-
-// Admin-side CRUD services.
 builder.Services.AddScoped<IMenuAdminService, EfMenuAdminService>();
 builder.Services.AddScoped<IStaffService, EfStaffService>();
-
-//
 builder.Services.AddScoped<IImageService, ImageService>();
-
-// Per-session cart.
 builder.Services.AddScoped<CartState>();
+#endregion
 
 var app = builder.Build();
-// Seed the database with initial menu data if it's empty.
+
+#region Database Seed
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider
-        .GetRequiredService<KusinaKantoDbContext>();
+    var db = scope.ServiceProvider.GetRequiredService<KusinaKantoDbContext>();
 
     await DbInitializer.SeedAsync(db);
 }
+#endregion
 
+#region Middleware Pipeline
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
     app.UseHsts();
 }
-// For serving uploaded images and other static assets.
-app.UseStaticFiles();
 
+app.UseStaticFiles();
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
+#endregion
 
-// --- Admin auth endpoints (plain form posts, so they run outside the Blazor circuit) ---
-app.MapPost("/auth/login", async (
-    HttpContext ctx,
-    IStaffService staff,
-    IPasswordHasher<Staff> hasher) =>
-{
-    var form = await ctx.Request.ReadFormAsync();
-    var email = form["email"].ToString().Trim();
-    var password = form["password"].ToString();
-    var returnUrl = form["returnUrl"].ToString();
-    if (string.IsNullOrWhiteSpace(returnUrl) || !returnUrl.StartsWith('/')) returnUrl = "/admin";
-
-    var member = await staff.GetByEmailAsync(email);
-    var ok = member is { Role: StaffRole.Admin, IsActive: true }
-             && !string.IsNullOrEmpty(member.PasswordHash)
-             && hasher.VerifyHashedPassword(member, member.PasswordHash, password)
-                 != PasswordVerificationResult.Failed;
-
-    if (!ok)
-        return Results.Redirect($"/login?error=true&returnUrl={Uri.EscapeDataString(returnUrl)}");
-
-    var claims = new List<Claim>
-    {
-        new(ClaimTypes.NameIdentifier, member!.Id),
-        new(ClaimTypes.Name, member.Name),
-        new(ClaimTypes.Email, member.Email),
-        new(ClaimTypes.Role, member.Role.ToString())
-    };
-    var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-    await ctx.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
-    return Results.Redirect(returnUrl);
-}).DisableAntiforgery();
-
-app.MapPost("/auth/logout", async (HttpContext ctx) =>
-{
-    await ctx.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-    return Results.Redirect("/login");
-}).DisableAntiforgery();
-
+#region Razor Components
 app.MapStaticAssets();
+app.MapAuthEndpoints();
+
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+#endregion
 
 app.Run();
