@@ -6,7 +6,7 @@
 @inject NavigationManager Nav
 
 <div class="min-h-screen bg-stone-50">
-    <Header OnCartClick="() => _cartOpen = true" />
+    <Header  TableNumber="@TableNumber" OnCartClick="() => _cartOpen = true" />
 
     <CategoryFilter Categories="_categories" Active="_activeCategory" OnChange="OnCategoryChange" />
 
