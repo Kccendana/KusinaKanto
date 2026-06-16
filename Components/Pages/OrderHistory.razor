@@ -1,0 +1,203 @@
+@page "/orders/{TableNumber:int}"
+@layout MainLayout
+
+@inject NavigationManager Nav
+
+@using Microsoft.EntityFrameworkCore
+@using KusinaKanto.Data
+@using KusinaKanto.Models
+
+@inject KusinaKantoDbContext Db
+
+<PageTitle>Order History</PageTitle>
+
+<div class="min-h-screen bg-stone-50">
+
+    <!-- Header -->
+    <div class="sticky top-0 z-10 bg-white border-b border-stone-200 shadow-sm">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+
+            <div>
+                <h1 class="text-3xl font-bold text-stone-900">
+                    Order History
+                </h1>
+
+                <p class="text-stone-500 text-sm mt-1">
+                    Current and previous orders
+                </p>
+            </div>
+
+            <button @onclick="OrderMore"
+                    class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl font-medium transition">
+                Order More
+            </button>
+
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="max-w-7xl mx-auto p-6">
+
+        @if (_rows.Count == 0)
+        {
+            <div class="bg-white rounded-3xl p-16 text-center shadow-sm border border-stone-100">
+                <h2 class="text-2xl font-bold text-stone-700">
+                    No Orders Yet
+                </h2>
+
+                <p class="text-stone-400 mt-2">
+                    Your order history will appear here.
+                </p>
+            </div>
+        }
+        else
+        {
+            <div class="bg-white rounded-3xl shadow-lg border border-stone-200 overflow-hidden">
+
+                <!-- Table Header -->
+                <div class="bg-stone-900 text-white px-6 py-4">
+                    <h2 class="text-xl font-bold">
+                        Ordered Items
+                    </h2>
+                </div>
+
+                <!-- Table -->
+                <div class="overflow-x-auto">
+
+                    <table class="w-full">
+
+                        <thead class="bg-stone-100">
+                            <tr>
+                                <th class="text-left px-6 py-4 font-semibold text-stone-700">
+                                    Item
+                                </th>
+
+                                <th class="text-center px-6 py-4 font-semibold text-stone-700">
+                                    Qty
+                                </th>
+
+                                <th class="text-center px-6 py-4 font-semibold text-stone-700">
+                                    Status
+                                </th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            @foreach (var row in _rows)
+                            {
+                                <tr class="border-t border-stone-200">
+
+                                    <td class="px-6 py-4">
+                                        @row.ItemName
+                                    </td>
+
+                                    <td class="px-6 py-4 text-center font-semibold">
+                                        @row.Quantity
+                                    </td>
+
+                                    <td class="px-6 py-4 text-center">
+
+                                        <span class="@GetStatusClass(row.Status)">
+                                            @row.Status
+                                        </span>
+
+                                    </td>
+
+                                </tr>
+                            }
+
+                        </tbody>
+
+                        <tfoot>
+
+                            <tr class="bg-stone-50 border-t border-stone-300">
+
+                                <td colspan="2"
+                                    class="px-6 py-5 text-right font-bold text-stone-700">
+                                    Overall Total
+                                </td>
+
+                                <td class="px-6 py-5 text-center text-2xl font-bold text-stone-900">
+                                    $@_overallTotal.ToString("0.00")
+                                </td>
+
+                            </tr>
+
+                        </tfoot>
+
+                    </table>
+
+                </div>
+
+            </div>
+        }
+
+    </div>
+
+</div>
+@code {
+@inject NavigationManager Nav
+
+private void OrderMore()
+{
+    Nav.NavigateTo($"/{TableNumber}");
+}
+    [Parameter]
+public int TableNumber { get; set; }
+
+private class OrderHistoryRow
+{
+    public string ItemName { get; set; } = "";
+    public int Quantity { get; set; }
+    public OrderStatus Status { get; set; }
+}
+   private decimal _overallTotal;
+
+    private List<Order> _orders = new();
+    private List<OrderHistoryRow> _rows = new();
+
+protected override async Task OnInitializedAsync()
+{
+    var orders = await Db.Orders
+    .Include(o => o.Items)
+    .Where(o => o.TableNumber == TableNumber)
+    .OrderByDescending(o => o.CreatedAt)
+    .ToListAsync();
+
+    _overallTotal = orders.Sum(o => o.TotalAmount);
+
+    _rows = _rows = orders
+    .SelectMany(order =>
+        order.Items.Select(item => new OrderHistoryRow
+        {
+            ItemName = item.Name,
+            Quantity = item.Quantity,
+            Status = order.Status
+        }))
+    .ToList();
+}
+
+    private string GetStatusClass(OrderStatus status)
+    {
+        return status switch
+        {
+            OrderStatus.Pending =>
+                "text-yellow-600 font-semibold",
+
+            OrderStatus.Confirmed =>
+                "text-blue-600 font-semibold",
+
+            OrderStatus.Preparing =>
+                "text-orange-600 font-semibold",
+
+            OrderStatus.Ready =>
+                "text-green-600 font-semibold",
+
+            OrderStatus.Completed =>
+                "text-gray-600 font-semibold",
+
+            _ => ""
+        };
+    }
+}

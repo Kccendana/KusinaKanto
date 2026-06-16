@@ -4,38 +4,62 @@
 <header class="sticky top-0 z-50 bg-white border-b border-stone-200 shadow-sm">
     <div class="max-w-6xl mx-auto px-4 sm:px-6">
         <div class="flex items-center justify-between h-16">
+
+            <!-- Logo -->
             <div class="flex items-center gap-3">
                 <img src="log.png" alt="KusinaKanto logo" class="w-10 h-10 rounded-full shadow-md object-cover" />
                 <div>
                     <h1 class="text-lg font-bold text-stone-900 leading-tight">KusinaKanto</h1>
                     <div class="flex items-center gap-1 text-xs text-stone-500">
                         <Icon Name="map-pin" Class="w-3 h-3" />
-                        <span>Authentic Filipino Kitchen</span>
+                        <span>Authentic Filipino Restaurant</span>
                     </div>
                 </div>
             </div>
 
-            <button @onclick="OnCartClick"
-                    class="relative flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl font-medium text-sm transition-all duration-200 shadow-md hover:shadow-lg active:scale-95">
-                <Icon Name="shopping-cart" Class="w-4 h-4" />
-                <span class="hidden sm:inline">Cart</span>
-                @if (Cart.Count > 0)
-                {
-                    <span class="hidden sm:inline text-amber-100">·</span>
-                    <span class="hidden sm:inline">$@Cart.Total.ToString("0.00")</span>
-                    <span class="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold sm:hidden">
-                        @Cart.Count
-                    </span>
-                }
-            </button>
+            <!-- Navigation -->
+            <div class="flex items-center gap-4">
+
+                <NavLink href="@($"/orders/{TableNumber}")"
+                         class="flex items-center gap-2 text-stone-700 hover:text-amber-600 font-medium text-sm transition-colors">
+                    <Icon Name="clipboard-list" Class="w-4 h-4" />
+                    <span>Order History</span>
+                </NavLink>
+
+                <button @onclick="OnCartClick"
+                        class="relative flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl font-medium text-sm transition-all duration-200 shadow-md hover:shadow-lg active:scale-95">
+                    <Icon Name="shopping-cart" Class="w-4 h-4" />
+                    <span class="hidden sm:inline">Cart</span>
+
+                    @if (Cart.Count > 0)
+                    {
+                        <span class="hidden sm:inline text-amber-100">·</span>
+                        <span class="hidden sm:inline">$@Cart.Total.ToString("0.00")</span>
+
+                        <span class="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold sm:hidden">
+                            @Cart.Count
+                        </span>
+                    }
+                </button>
+
+            </div>
+
         </div>
     </div>
 </header>
 
 @code {
     [Parameter] public EventCallback OnCartClick { get; set; }
+    [Parameter]
+public int? TableNumber { get; set; }
 
-    protected override void OnInitialized() => Cart.OnChange += StateHasChanged;
+    protected override void OnInitialized()
+    {
+        Cart.OnChange += StateHasChanged;
+    }
 
-    public void Dispose() => Cart.OnChange -= StateHasChanged;
+    public void Dispose()
+    {
+        Cart.OnChange -= StateHasChanged;
+    }
 }

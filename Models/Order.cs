@@ -7,6 +7,7 @@ public enum OrderStatus
     Confirmed,
     Preparing,
     Ready,
+    CheckoutRequested,
     Completed
 }
 
