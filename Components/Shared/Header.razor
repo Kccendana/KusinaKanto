@@ -20,11 +20,15 @@
             <!-- Navigation -->
             <div class="flex items-center gap-4">
 
-                <NavLink href="@($"/orders/{TableNumber}")"
-                         class="flex items-center gap-2 text-stone-700 hover:text-amber-600 font-medium text-sm transition-colors">
-                    <Icon Name="clipboard-list" Class="w-4 h-4" />
-                    <span>Order History</span>
-                </NavLink>
+                @* Order history is per-table, so only show it when we know the table. *@
+                @if (TableNumber.HasValue)
+                {
+                    <NavLink href="@($"/orders/{TableNumber}")"
+                             class="flex items-center gap-2 text-stone-700 hover:text-amber-600 font-medium text-sm transition-colors">
+                        <Icon Name="clipboard-list" Class="w-4 h-4" />
+                        <span>Order History</span>
+                    </NavLink>
+                }
 
                 <button @onclick="OnCartClick"
                         class="relative flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl font-medium text-sm transition-all duration-200 shadow-md hover:shadow-lg active:scale-95">
