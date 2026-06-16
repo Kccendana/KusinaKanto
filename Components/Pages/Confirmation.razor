@@ -120,8 +120,13 @@ else
 
     private void OrderMore()
     {
-        Cart.LastOrder = null;
-        Cart.LastItems = new();
-        Nav.NavigateTo("/");
+    var tableNumber = _order?.TableNumber;
+
+    Cart.LastOrder = null;
+    Cart.LastItems.Clear();
+
+    Nav.NavigateTo(tableNumber.HasValue
+        ? $"/{tableNumber.Value}"
+        : "/");
     }
 }
